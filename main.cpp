@@ -60,9 +60,9 @@ private:
 	int width;
 	int height;
 public:
-	QuadMap(int new_width, int new_height){
-		width = new_width*16;
-		height = new_height*16;
+	QuadMap(int new_width, int new_height, int div){
+		width = new_width*div*div;
+		height = new_height*div*div;
 		tiles = (Tile ***)malloc(width*sizeof(Tile**));
 		int id = 0;
 		for (int x = 0; x < width; x++){
@@ -80,8 +80,7 @@ public:
 					land_map[x][y] = OCEAN;
 					continue;
 				}
-				int land_thresh = 5+50*sin((float)y*M_PI/(float)(new_height));
-				printf("y = %d, land_thresh = %d\n",y,land_thresh);
+				int land_thresh = 5+40*sin((float)y*M_PI/(float)(new_height));
 				int choice = rand()%100;
 				if (choice < land_thresh){
 					land_map[x][y] = LAND;
@@ -91,248 +90,248 @@ public:
 				}
 			}
 		}
-		TileType land_map_2[new_width*4][new_height*4];
+		TileType land_map_2[new_width*div][new_height*div];
 		int choice;
 		int coord_x;
 		int coord_y;
-		for (int x = 0; x < new_width*4; x++){
-			for (int y = 0; y < new_height*4; y++){
+		for (int x = 0; x < new_width*div; x++){
+			for (int y = 0; y < new_height*div; y++){
 				choice = rand()%100;
-				if (x%4 == 0){ //this is on the left border of a 4x4
-					if (y%4 == 0){ //this is on the top border of a 4x4 --> this is a top left corner
+				if (x%div == 0){ //this is on the left border of a divxdiv
+					if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top left corner
 						if (choice < 20){ //pick (-1,-1)
-							coord_x = ((x/4)+(new_width-1))%new_width;
-							coord_y = ((y/4)+(new_height-1))%new_height;
+							coord_x = ((x/div)+(new_width-1))%new_width;
+							coord_y = ((y/div)+(new_height-1))%new_height;
 						}
 						else if (choice < 40){ //pick (-1,0)
-							coord_x = ((x/4)+(new_width-1))%new_width;
-							coord_y = y/4;
+							coord_x = ((x/div)+(new_width-1))%new_width;
+							coord_y = y/div;
 						}
 						else if (choice < 60){ //pick (0,-1)
-							coord_x = x/4;
-							coord_y = ((y/4)+(new_height-1))%new_height;
+							coord_x = x/div;
+							coord_y = ((y/div)+(new_height-1))%new_height;
 						}
 						else { //pick (0,0)
-							coord_x = x/4;
-							coord_y = y/4;
+							coord_x = x/div;
+							coord_y = y/div;
 						}
 					}
-					else if (y%4 == 3) { //this is on the right border of a 4x4 --> this is a bottom rightt corner
+					else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom rightt corner
 						if (choice < 20){ //pick (-1,1)
-							coord_x = ((x/4)+(new_width-1))%new_width;
-							coord_y = ((y/4)+1)%new_height;
+							coord_x = ((x/div)+(new_width-1))%new_width;
+							coord_y = ((y/div)+1)%new_height;
 						}
 						else if (choice < 40){ //pick (-1,0)
-							coord_x = ((x/4)+(new_width-1))%new_width;
-							coord_y = y/4;
+							coord_x = ((x/div)+(new_width-1))%new_width;
+							coord_y = y/div;
 						}
 						else if (choice < 60){ //pick (0,1)
-							coord_x = x/4;
-							coord_y = ((y/4)+1)%new_height;
+							coord_x = x/div;
+							coord_y = ((y/div)+1)%new_height;
 						}
 						else { //pick (0,0)
-							coord_x = x/4;
-							coord_y = y/4;
+							coord_x = x/div;
+							coord_y = y/div;
 						}
 					}
 					else {
-						coord_y = y/4;
-						if (choice < 40){ //this is a non-corner left border of a 4x4
-							coord_x = ((x/4)+(new_width-1))%new_width;
+						coord_y = y/div;
+						if (choice < 40){ //this is a non-corner left border of a divxdiv
+							coord_x = ((x/div)+(new_width-1))%new_width;
 						}
 						else{
-							coord_x = x/4;
+							coord_x = x/div;
 						}
 					}
 				}
-				else if (x%4 == 3){
-					if (y%4 == 0){ //this is on the top border of a 4x4 --> this is a top right corner
+				else if (x%div == div-1){
+					if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top right corner
 						if (choice < 20){ //pick (1,-1)
-							coord_x = ((x/4)+1)%new_width;
-							coord_y = ((y/4)+(new_height-1))%new_height;
+							coord_x = ((x/div)+1)%new_width;
+							coord_y = ((y/div)+(new_height-1))%new_height;
 						}
 						else if (choice < 40){ //pick (1,0)
-							coord_x = ((x/4)+1)%new_width;
-							coord_y = y/4;
+							coord_x = ((x/div)+1)%new_width;
+							coord_y = y/div;
 						}
 						else if (choice < 60){ //pick (0,-1)
-							coord_x = x/4;
-							coord_y = ((y/4)+(new_height-1))%new_height;
+							coord_x = x/div;
+							coord_y = ((y/div)+(new_height-1))%new_height;
 						}
 						else { //pick (0,0)
-							coord_x = x/4;
-							coord_y = y/4;
+							coord_x = x/div;
+							coord_y = y/div;
 						}
 					}
-					else if (y%4 == 3) { //this is on the right border of a 4x4 --> this is a bottom right corner
+					else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom right corner
 						if (choice < 20){ //pick (1,1)
-							coord_x = ((x/4)+1)%new_width;
-							coord_y = ((y/4)+1)%new_height;
+							coord_x = ((x/div)+1)%new_width;
+							coord_y = ((y/div)+1)%new_height;
 						}
 						else if (choice < 40){ //pick (1,0)
-							coord_x = ((x/4)+1)%new_width;
-							coord_y = y/4;
+							coord_x = ((x/div)+1)%new_width;
+							coord_y = y/div;
 						}
 						else if (choice < 60){ //pick (0,1)
-							coord_x = x/4;
-							coord_y = ((y/4)+1)%new_height;
+							coord_x = x/div;
+							coord_y = ((y/div)+1)%new_height;
 						}
 						else { //pick (0,0)
-							coord_x = x/4;
-							coord_y = y/4;
+							coord_x = x/div;
+							coord_y = y/div;
 						}
 					}
 					else {
-						coord_y = y/4;
+						coord_y = y/div;
 						if (choice < 40){ //this is a non-corner right border of a 4x4
-							coord_x = ((x/4)+1)%new_width;
+							coord_x = ((x/div)+1)%new_width;
 						}
 						else{
-							coord_x = x/4;
+							coord_x = x/div;
 						}
 					}
 				}
 				else {
-					coord_x = x/4;
-					if (y%4 == 0){
+					coord_x = x/div;
+					if (y%div == 0){
 						if (choice < 40){
-							coord_y = ((y/4)+(new_height-1))%new_height;
+							coord_y = ((y/div)+(new_height-1))%new_height;
 						}
 						else {
-							coord_y = y/4;
+							coord_y = y/div;
 						}
 					}
-					else if (y%4 == 3){
+					else if (y%div == div-1){
 						if (choice < 40){
-							coord_y = (y/4+1)%new_height;
+							coord_y = (y/div+1)%new_height;
 						}
 						else {
-							coord_y = y/4;
+							coord_y = y/div;
 						}
 					}
 					else {
-						coord_y = y/4;
+						coord_y = y/div;
 					}
 				}
 				land_map_2[x][y]=land_map[coord_x][coord_y];
 			}
-			for (int x = 0; x < new_width*16; x++){
-				for (int y = 0; y < new_height*16; y++){
+			for (int x = 0; x < new_width*div*div; x++){
+				for (int y = 0; y < new_height*div*div; y++){
 					choice = rand()%100;
-					if (x%4 == 0){ //this is on the left border of a 4x4
-						if (y%4 == 0){ //this is on the top border of a 4x4 --> this is a top left corner
+					if (x%div == 0){ //this is on the left border of a divxdiv
+						if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top left corner
 							if (choice < 20){ //pick (-1,-1)
-								coord_x = ((x/4)+(new_width*4-1))%(new_width*4);
-								coord_y = ((y/4)+(new_height*4-1))%(new_height*4);
+								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
+								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
 							}
 							else if (choice < 40){ //pick (-1,0)
-								coord_x = ((x/4)+(new_width*4-1))%(new_width*4);
-								coord_y = y/4;
+								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
+								coord_y = y/div;
 							}
 							else if (choice < 60){ //pick (0,-1)
-								coord_x = x/4;
-								coord_y = ((y/4)+(new_height*4-1))%(new_height*4);
+								coord_x = x/div;
+								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
 							}
 							else { //pick (0,0)
-								coord_x = x/4;
-								coord_y = y/4;
+								coord_x = x/div;
+								coord_y = y/div;
 							}
 						}
-						else if (y%4 == 3) { //this is on the right border of a 4x4 --> this is a bottom rightt corner
+						else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom rightt corner
 							if (choice < 20){ //pick (-1,1)
-								coord_x = ((x/4)+(new_width*4-1))%(new_width*4);
-								coord_y = ((y/4)+1)%(new_height*4);
+								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
+								coord_y = ((y/div)+1)%(new_height*div);
 							}
 							else if (choice < 40){ //pick (-1,0)
-								coord_x = ((x/4)+(new_width*4-1))%(new_width*4);
-								coord_y = y/4;
+								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
+								coord_y = y/div;
 							}
 							else if (choice < 60){ //pick (0,1)
-								coord_x = x/4;
-								coord_y = ((y/4)+1)%(new_height*4);
+								coord_x = x/div;
+								coord_y = ((y/div)+1)%(new_height*div);
 							}
 							else { //pick (0,0)
-								coord_x = x/4;
-								coord_y = y/4;
+								coord_x = x/div;
+								coord_y = y/div;
 							}
 						}
 						else {
-							coord_y = y/4;
-							if (choice < 40){ //this is a non-corner left border of a 4x4
-								coord_x = ((x/4)+(new_width*4-1))%(new_width*4);
+							coord_y = y/div;
+							if (choice < 40){ //this is a non-corner left border of a divxdiv
+								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
 							}
 							else{
-								coord_x = x/4;
+								coord_x = x/div;
 							}
 						}
 					}
-					else if (x%4 == 3){
-						if (y%4 == 0){ //this is on the top border of a 4x4 --> this is a top right corner
+					else if (x%div == div-1){
+						if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top right corner
 							if (choice < 20){ //pick (1,-1)
-								coord_x = ((x/4)+1)%(new_width*4);
-								coord_y = ((y/4)+(new_height*4-1))%(new_height*4);
+								coord_x = ((x/div)+1)%(new_width*div);
+								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
 							}
 							else if (choice < 40){ //pick (1,0)
-								coord_x = ((x/4)+1)%(new_width*4);
-								coord_y = y/4;
+								coord_x = ((x/div)+1)%(new_width*div);
+								coord_y = y/div;
 							}
 							else if (choice < 60){ //pick (0,-1)
-								coord_x = x/4;
-								coord_y = ((y/4)+(new_height*4-1))%(new_height*4);
+								coord_x = x/div;
+								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
 							}
 							else { //pick (0,0)
-								coord_x = x/4;
-								coord_y = y/4;
+								coord_x = x/div;
+								coord_y = y/div;
 							}
 						}
-						else if (y%4 == 3) { //this is on the right border of a 4x4 --> this is a bottom right corner
+						else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom right corner
 							if (choice < 20){ //pick (1,1)
-								coord_x = ((x/4)+1)%(new_width*4);
-								coord_y = ((y/4)+1)%(new_height*4);
+								coord_x = ((x/div)+1)%(new_width*div);
+								coord_y = ((y/div)+1)%(new_height*div);
 							}
 							else if (choice < 40){ //pick (1,0)
-								coord_x = ((x/4)+1)%(new_width*4);
-								coord_y = y/4;
+								coord_x = ((x/div)+1)%(new_width*div);
+								coord_y = y/div;
 							}
 							else if (choice < 60){ //pick (0,1)
-								coord_x = x/4;
-								coord_y = ((y/4)+1)%(new_height*4);
+								coord_x = x/div;
+								coord_y = ((y/div)+1)%(new_height*div);
 							}
 							else { //pick (0,0)
-								coord_x = x/4;
-								coord_y = y/4;
+								coord_x = x/div;
+								coord_y = y/div;
 							}
 						}
 						else {
-							coord_y = y/4;
-							if (choice < 40){ //this is a non-corner right border of a 4x4
-								coord_x = ((x/4)+1)%(new_width*4);
+							coord_y = y/div;
+							if (choice < 40){ //this is a non-corner right border of a divxdiv
+								coord_x = ((x/div)+1)%(new_width*div);
 							}
 							else{
-								coord_x = x/4;
+								coord_x = x/div;
 							}
 						}
 					}
 					else {
-						coord_x = x/4;
-						if (y%4 == 0){
+						coord_x = x/div;
+						if (y%div == 0){
 							if (choice < 40){
-								coord_y = ((y/4)+(new_height*4-1))%(new_height*4);
+								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
 							}
 							else {
-								coord_y = y/4;
+								coord_y = y/div;
 							}
 						}
-						else if (y%4 == 3){
+						else if (y%div == div-1){
 							if (choice < 40){
-								coord_y = (y/4+1)%(new_height*4);
+								coord_y = (y/div+1)%(new_height*div);
 							}
 							else {
-								coord_y = y/4;
+								coord_y = y/div;
 							}
 						}
 						else {
-							coord_y = y/4;
+							coord_y = y/div;
 						}
 					}
 					tiles[x][y]->set_type(land_map_2[coord_x][coord_y]);
@@ -340,11 +339,11 @@ public:
 			}
 		}
 	}
-	void draw(){
+	void draw(int off_ctr, float marg_off){
 		for (int x = 0; x < width; x++){
 			for (int y = 0; y < height; y++){
 				glPushMatrix();
-					glTranslatef((float)(-width/2+x)*TILE_WIDTH,(float)(-height/2+y)*TILE_WIDTH,0.0);
+					glTranslatef((float)(-width/2+(x+off_ctr)%width + marg_off)*TILE_WIDTH,(float)(-height/2+y)*TILE_WIDTH,0.0);
 					tiles[x][y]->draw();
 				glPopMatrix();
 			}
@@ -353,16 +352,21 @@ public:
 };
 
 QuadMap *map;
-
+int ctr = 0;
+float marginal_ctr = 0.0;
 void update(){
-
+	marginal_ctr += 0.1;
+	if (marginal_ctr >= 1.0){
+		marginal_ctr = 0.0;
+		ctr++;
+	}
 }
 
 void display(){
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
 	glScalef(0.0125,0.0125,0.0125);
-	map->draw();
+	map->draw(ctr,marginal_ctr);
 	glPopMatrix();
 	window->display();
 }
@@ -383,7 +387,7 @@ void init(){
 	glMatrixMode(GL_PROJECTION);
 	glOrtho(-ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,-ORTHO_RADIUS,ORTHO_RADIUS,-100.0,100.0);
 	glMatrixMode(GL_MODELVIEW);
-	map = new QuadMap(20,10);
+	map = new QuadMap(32,16,3);
 }
 
 int main(int argc, char **argv) {

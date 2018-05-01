@@ -22,7 +22,8 @@ sf::Vector2u screen_size;
 
 enum TileType {
 	OCEAN = 0,
-	LAND = 1
+	LAND = 1,
+	ICE = 2
 };
 
 class Tile {
@@ -43,6 +44,9 @@ public:
 		break;
 		case LAND:
 			glColor3f(0.1,0.7,0.1);
+		break;
+		case ICE:
+			glColor3f(0.9,0.9,0.9);
 		break;
 		}
 		glBegin(GL_QUADS);
@@ -76,11 +80,15 @@ public:
 		TileType land_map[new_width][new_height];
 		for (int x = 0; x < new_width; x++){
 			for (int y = 0; y < new_height; y++){
-				if (y==0 || y == new_height-1){
+				if (y<=1 || y >= new_height-2){
+					land_map[x][y] = ICE;
+					continue;
+				}
+				else if (y==2 || y == new_height-3){
 					land_map[x][y] = OCEAN;
 					continue;
 				}
-				int land_thresh = 5+40*sin((float)y*M_PI/(float)(new_height));
+				int land_thresh = 50*sin((float)y*M_PI/(float)(new_height));
 				int choice = rand()%100;
 				if (choice < land_thresh){
 					land_map[x][y] = LAND;
@@ -343,7 +351,14 @@ public:
 		for (int x = 0; x < width; x++){
 			for (int y = 0; y < height; y++){
 				glPushMatrix();
-					glTranslatef((float)(-width/2+(x+off_ctr)%width + marg_off)*TILE_WIDTH,(float)(-height/2+y)*TILE_WIDTH,0.0);
+					//glTranslatef((float)(-width/2+(x+off_ctr)%width + marg_off)*TILE_WIDTH,(float)(-height/2+y)*TILE_WIDTH,0.0);
+
+					glRotatef(360.0*(float)x/(float)width + marg_off,0.0,1.0,0.0);
+					glRotatef(180.0*(float)(-height/2+y)/(float)height,1.0,0.0,0.0);
+					glTranslatef(0.0,0.0,(float)width*TILE_WIDTH/(M_PI*2.0));
+
+					//glTranslatef(0.0,(float)(-height/2+y)*TILE_WIDTH,(float)width*TILE_WIDTH/(M_PI*2.0));
+
 					tiles[x][y]->draw();
 				glPopMatrix();
 			}
@@ -355,11 +370,7 @@ QuadMap *map;
 int ctr = 0;
 float marginal_ctr = 0.0;
 void update(){
-	marginal_ctr += 0.1;
-	if (marginal_ctr >= 1.0){
-		marginal_ctr = 0.0;
-		ctr++;
-	}
+	marginal_ctr += 0.5;
 }
 
 void display(){

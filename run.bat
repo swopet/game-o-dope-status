@@ -1,0 +1,1 @@
+hex_map.exe 1> log.txt 2> error.txt

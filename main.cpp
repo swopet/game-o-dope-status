@@ -9,375 +9,38 @@
 #include <time.h>
 #include <map>
 #include <sstream>
+#include <iostream>
+#include <fstream>
 #include <cstring>
-
-//#define SCREENCAP
-#define ROTATION_SPEED 0.05
 #define WIREFRAME false
 #define ORTHO_RADIUS 1.0
-#define TILE_WIDTH 1.0
+#define TILE_WIDTH 0.02
+#define LEFT 0
+#define UP 1
+#define RIGHT 2
+#define DOWN 3
 sf::RenderWindow * window;
 
 sf::Vector2u screen_size;
 
-enum TileType {
-	OCEAN = 0,
-	LAND = 1,
-	ICE = 2
-};
+#include "MapMaker.cpp"
 
-class Tile {
-private:
-	TileType type;
-	int id;
-public:
-	void set_id(int new_id){
-		id = new_id;
-	}
-	void set_type(TileType new_type){
-		type = new_type;
-	}
-	void draw(){
-		switch (type){
-		case OCEAN:
-			glColor3f(0.1,0.1,0.7);
-		break;
-		case LAND:
-			glColor3f(0.1,0.7,0.1);
-		break;
-		case ICE:
-			glColor3f(0.9,0.9,0.9);
-		break;
-		}
-		glBegin(GL_QUADS);
-			glVertex2f(-TILE_WIDTH/2.0,-TILE_WIDTH/2.0);
-			glVertex2f(-TILE_WIDTH/2.0,TILE_WIDTH/2.0);
-			glVertex2f(TILE_WIDTH/2.0,TILE_WIDTH/2.0);
-			glVertex2f(TILE_WIDTH/2.0,-TILE_WIDTH/2.0);
-		glEnd();
-	}
-};
+MapMaker * map_maker;
 
-class QuadMap {
-private:
-	Tile *** tiles;
-	int width;
-	int height;
-public:
-	QuadMap(int new_width, int new_height, int div){
-		width = new_width*div*div;
-		height = new_height*div*div;
-		tiles = (Tile ***)malloc(width*sizeof(Tile**));
-		int id = 0;
-		for (int x = 0; x < width; x++){
-			tiles[x] = (Tile **)malloc(height*sizeof(Tile*));
-			for (int y = 0; y < height; y++){
-				tiles[x][y] = new Tile();
-				tiles[x][y]->set_id(id);
-				id++;
-			}
-		}
-		TileType land_map[new_width][new_height];
-		for (int x = 0; x < new_width; x++){
-			for (int y = 0; y < new_height; y++){
-				if (y<=1 || y >= new_height-2){
-					land_map[x][y] = ICE;
-					continue;
-				}
-				else if (y==2 || y == new_height-3){
-					land_map[x][y] = OCEAN;
-					continue;
-				}
-				int land_thresh = 50*sin((float)y*M_PI/(float)(new_height));
-				int choice = rand()%100;
-				if (choice < land_thresh){
-					land_map[x][y] = LAND;
-				}
-				else {
-					land_map[x][y] = OCEAN;
-				}
-			}
-		}
-		TileType land_map_2[new_width*div][new_height*div];
-		int choice;
-		int coord_x;
-		int coord_y;
-		for (int x = 0; x < new_width*div; x++){
-			for (int y = 0; y < new_height*div; y++){
-				choice = rand()%100;
-				if (x%div == 0){ //this is on the left border of a divxdiv
-					if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top left corner
-						if (choice < 20){ //pick (-1,-1)
-							coord_x = ((x/div)+(new_width-1))%new_width;
-							coord_y = ((y/div)+(new_height-1))%new_height;
-						}
-						else if (choice < 40){ //pick (-1,0)
-							coord_x = ((x/div)+(new_width-1))%new_width;
-							coord_y = y/div;
-						}
-						else if (choice < 60){ //pick (0,-1)
-							coord_x = x/div;
-							coord_y = ((y/div)+(new_height-1))%new_height;
-						}
-						else { //pick (0,0)
-							coord_x = x/div;
-							coord_y = y/div;
-						}
-					}
-					else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom rightt corner
-						if (choice < 20){ //pick (-1,1)
-							coord_x = ((x/div)+(new_width-1))%new_width;
-							coord_y = ((y/div)+1)%new_height;
-						}
-						else if (choice < 40){ //pick (-1,0)
-							coord_x = ((x/div)+(new_width-1))%new_width;
-							coord_y = y/div;
-						}
-						else if (choice < 60){ //pick (0,1)
-							coord_x = x/div;
-							coord_y = ((y/div)+1)%new_height;
-						}
-						else { //pick (0,0)
-							coord_x = x/div;
-							coord_y = y/div;
-						}
-					}
-					else {
-						coord_y = y/div;
-						if (choice < 40){ //this is a non-corner left border of a divxdiv
-							coord_x = ((x/div)+(new_width-1))%new_width;
-						}
-						else{
-							coord_x = x/div;
-						}
-					}
-				}
-				else if (x%div == div-1){
-					if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top right corner
-						if (choice < 20){ //pick (1,-1)
-							coord_x = ((x/div)+1)%new_width;
-							coord_y = ((y/div)+(new_height-1))%new_height;
-						}
-						else if (choice < 40){ //pick (1,0)
-							coord_x = ((x/div)+1)%new_width;
-							coord_y = y/div;
-						}
-						else if (choice < 60){ //pick (0,-1)
-							coord_x = x/div;
-							coord_y = ((y/div)+(new_height-1))%new_height;
-						}
-						else { //pick (0,0)
-							coord_x = x/div;
-							coord_y = y/div;
-						}
-					}
-					else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom right corner
-						if (choice < 20){ //pick (1,1)
-							coord_x = ((x/div)+1)%new_width;
-							coord_y = ((y/div)+1)%new_height;
-						}
-						else if (choice < 40){ //pick (1,0)
-							coord_x = ((x/div)+1)%new_width;
-							coord_y = y/div;
-						}
-						else if (choice < 60){ //pick (0,1)
-							coord_x = x/div;
-							coord_y = ((y/div)+1)%new_height;
-						}
-						else { //pick (0,0)
-							coord_x = x/div;
-							coord_y = y/div;
-						}
-					}
-					else {
-						coord_y = y/div;
-						if (choice < 40){ //this is a non-corner right border of a 4x4
-							coord_x = ((x/div)+1)%new_width;
-						}
-						else{
-							coord_x = x/div;
-						}
-					}
-				}
-				else {
-					coord_x = x/div;
-					if (y%div == 0){
-						if (choice < 40){
-							coord_y = ((y/div)+(new_height-1))%new_height;
-						}
-						else {
-							coord_y = y/div;
-						}
-					}
-					else if (y%div == div-1){
-						if (choice < 40){
-							coord_y = (y/div+1)%new_height;
-						}
-						else {
-							coord_y = y/div;
-						}
-					}
-					else {
-						coord_y = y/div;
-					}
-				}
-				land_map_2[x][y]=land_map[coord_x][coord_y];
-			}
-			for (int x = 0; x < new_width*div*div; x++){
-				for (int y = 0; y < new_height*div*div; y++){
-					choice = rand()%100;
-					if (x%div == 0){ //this is on the left border of a divxdiv
-						if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top left corner
-							if (choice < 20){ //pick (-1,-1)
-								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
-								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
-							}
-							else if (choice < 40){ //pick (-1,0)
-								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
-								coord_y = y/div;
-							}
-							else if (choice < 60){ //pick (0,-1)
-								coord_x = x/div;
-								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
-							}
-							else { //pick (0,0)
-								coord_x = x/div;
-								coord_y = y/div;
-							}
-						}
-						else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom rightt corner
-							if (choice < 20){ //pick (-1,1)
-								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
-								coord_y = ((y/div)+1)%(new_height*div);
-							}
-							else if (choice < 40){ //pick (-1,0)
-								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
-								coord_y = y/div;
-							}
-							else if (choice < 60){ //pick (0,1)
-								coord_x = x/div;
-								coord_y = ((y/div)+1)%(new_height*div);
-							}
-							else { //pick (0,0)
-								coord_x = x/div;
-								coord_y = y/div;
-							}
-						}
-						else {
-							coord_y = y/div;
-							if (choice < 40){ //this is a non-corner left border of a divxdiv
-								coord_x = ((x/div)+(new_width*div-1))%(new_width*div);
-							}
-							else{
-								coord_x = x/div;
-							}
-						}
-					}
-					else if (x%div == div-1){
-						if (y%div == 0){ //this is on the top border of a divxdiv --> this is a top right corner
-							if (choice < 20){ //pick (1,-1)
-								coord_x = ((x/div)+1)%(new_width*div);
-								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
-							}
-							else if (choice < 40){ //pick (1,0)
-								coord_x = ((x/div)+1)%(new_width*div);
-								coord_y = y/div;
-							}
-							else if (choice < 60){ //pick (0,-1)
-								coord_x = x/div;
-								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
-							}
-							else { //pick (0,0)
-								coord_x = x/div;
-								coord_y = y/div;
-							}
-						}
-						else if (y%div == div-1) { //this is on the right border of a divxdiv --> this is a bottom right corner
-							if (choice < 20){ //pick (1,1)
-								coord_x = ((x/div)+1)%(new_width*div);
-								coord_y = ((y/div)+1)%(new_height*div);
-							}
-							else if (choice < 40){ //pick (1,0)
-								coord_x = ((x/div)+1)%(new_width*div);
-								coord_y = y/div;
-							}
-							else if (choice < 60){ //pick (0,1)
-								coord_x = x/div;
-								coord_y = ((y/div)+1)%(new_height*div);
-							}
-							else { //pick (0,0)
-								coord_x = x/div;
-								coord_y = y/div;
-							}
-						}
-						else {
-							coord_y = y/div;
-							if (choice < 40){ //this is a non-corner right border of a divxdiv
-								coord_x = ((x/div)+1)%(new_width*div);
-							}
-							else{
-								coord_x = x/div;
-							}
-						}
-					}
-					else {
-						coord_x = x/div;
-						if (y%div == 0){
-							if (choice < 40){
-								coord_y = ((y/div)+(new_height*div-1))%(new_height*div);
-							}
-							else {
-								coord_y = y/div;
-							}
-						}
-						else if (y%div == div-1){
-							if (choice < 40){
-								coord_y = (y/div+1)%(new_height*div);
-							}
-							else {
-								coord_y = y/div;
-							}
-						}
-						else {
-							coord_y = y/div;
-						}
-					}
-					tiles[x][y]->set_type(land_map_2[coord_x][coord_y]);
-				}
-			}
-		}
-	}
-	void draw(int off_ctr, float marg_off){
-		for (int x = 0; x < width; x++){
-			for (int y = 0; y < height; y++){
-				glPushMatrix();
-					//glTranslatef((float)(-width/2+(x+off_ctr)%width + marg_off)*TILE_WIDTH,(float)(-height/2+y)*TILE_WIDTH,0.0);
-
-					glRotatef(360.0*(float)x/(float)width + marg_off,0.0,1.0,0.0);
-					glRotatef(180.0*(float)(-height/2+y)/(float)height,1.0,0.0,0.0);
-					glTranslatef(0.0,0.0,(float)width*TILE_WIDTH/(M_PI*2.0));
-
-					//glTranslatef(0.0,(float)(-height/2+y)*TILE_WIDTH,(float)width*TILE_WIDTH/(M_PI*2.0));
-
-					tiles[x][y]->draw();
-				glPopMatrix();
-			}
-		}
-	}
-};
-
-QuadMap *map;
-int ctr = 0;
-float marginal_ctr = 0.0;
+float ctr = 30.0;
 void update(){
-	marginal_ctr += 0.5;
+	//ctr += 1.0;
 }
 
 void display(){
+#if WIREFRAME == true
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
-	glScalef(0.0125,0.0125,0.0125);
-	map->draw(ctr,marginal_ctr);
+    glScalef(0.5,0.5,0.5);
+    glRotatef(ctr,1.0,1.0,1.0);
+    map_maker->draw();
 	glPopMatrix();
 	window->display();
 }
@@ -398,7 +61,7 @@ void init(){
 	glMatrixMode(GL_PROJECTION);
 	glOrtho(-ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,-ORTHO_RADIUS,ORTHO_RADIUS,-100.0,100.0);
 	glMatrixMode(GL_MODELVIEW);
-	map = new QuadMap(32,16,3);
+    map_maker = new MapMaker();
 }
 
 int main(int argc, char **argv) {
@@ -415,7 +78,10 @@ int main(int argc, char **argv) {
     // activate the window
     window->setActive(true);
     init();
-
+    int up_pressed = 0;
+    int down_pressed = 0;
+    int right_pressed = 0;
+    int left_pressed = 0;
     bool running = true;
     while (running){
         // handle events
@@ -434,6 +100,46 @@ int main(int argc, char **argv) {
                 screen_size.y = event.size.height;
             }
         }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+        	if (!right_pressed){
+        		map_maker->load(RIGHT);
+                right_pressed = 10;
+        	}
+            else right_pressed--;
+        }
+		else {
+			right_pressed = 0;
+		}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+        	if (!left_pressed){
+        		map_maker->load(LEFT);
+                left_pressed = 10;
+        	}
+            else left_pressed--;
+        }
+		else {
+			left_pressed = 0;
+		}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)){
+        	if (!up_pressed){
+        		map_maker->load(UP);
+                up_pressed = 10;
+        	}
+            else up_pressed--;
+        }
+		else {
+			up_pressed = 0;
+		}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
+        	if (!down_pressed){
+        		map_maker->load(DOWN);
+                down_pressed = 10;
+        	}
+            else down_pressed--;
+        }
+		else {
+			down_pressed = 0;
+		}
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
 
         }

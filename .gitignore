@@ -1,4 +1,4 @@
-make.bat
 libstdc++-6.dll
 main.o
 *.exe
+*.txt

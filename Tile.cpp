@@ -20,6 +20,9 @@ public:
     int getID(){
         return id;
     }
+    TileType getType(){
+        return type;
+    }
     void setID(int new_id){
         id = new_id;
     }
@@ -77,6 +80,14 @@ public:
             break;
         }
         glDrawElements(GL_QUADS,4,GL_UNSIGNED_INT,quad_array);
+    }
+    void swap_LR(){
+        int right = neighbors[RIGHT];
+        neighbors[RIGHT] = neighbors[LEFT];
+        neighbors[LEFT] = right;
+    }
+    sf::Vector3f getNormalVector3f(){
+        return sf::Vector3f(avg_normal[0],avg_normal[1],avg_normal[2]);
     }
     Tile ** subdivide(std::map<int, Tile*> tile_map){ //assume that this will be called on every other tile at the same level
         Tile ** new_tiles = (Tile **)malloc(4*sizeof(Tile *));

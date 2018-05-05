@@ -27,7 +27,6 @@ sf::Vector2u screen_size;
 
 MapMaker * map_maker;
 
-float ctr = 30.0;
 void update(){
 	//ctr += 1.0;
 }
@@ -38,8 +37,6 @@ void display(){
 #endif
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
-    glScalef(0.5,0.5,0.5);
-    glRotatef(ctr,1.0,1.0,1.0);
     map_maker->draw();
 	glPopMatrix();
 	window->display();
@@ -51,7 +48,7 @@ void init(){
 	glClearColor(0.0,0.0,0.0,1.0);
 	glViewport(0.0,0.0,screen_size.x,screen_size.y);
 	glShadeModel (GL_SMOOTH);
-
+    glFrontFace(GL_CW);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	float light_position[] = {1.0,1.0,1.0,0.0};
@@ -59,7 +56,9 @@ void init(){
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 	glMatrixMode(GL_PROJECTION);
-	glOrtho(-ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,-ORTHO_RADIUS,ORTHO_RADIUS,-100.0,100.0);
+    
+	//glOrtho(-ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,ORTHO_RADIUS*(float)screen_size.x/(float)screen_size.y,-ORTHO_RADIUS,ORTHO_RADIUS,-100.0,100.0);
+    gluPerspective(45.0,(float)screen_size.x/(float)screen_size.y,0.001,1000.0);
 	glMatrixMode(GL_MODELVIEW);
     map_maker = new MapMaker();
 }
@@ -71,7 +70,7 @@ int main(int argc, char **argv) {
 	settings.antialiasingLevel = 0;
 	settings.majorVersion = 3;
 	settings.minorVersion = 0;
-	window = new sf::RenderWindow(sf::VideoMode(800,400),"One Mappy Boi",sf::Style::Default, settings);
+	window = new sf::RenderWindow(sf::VideoMode(960,600),"One Mappy Boi",sf::Style::Default, settings);
 	//printf("depth bits: %d\n",window->getSettings().depthBits);
     window->setVerticalSyncEnabled(true);
     srand(time(NULL));
@@ -98,12 +97,13 @@ int main(int argc, char **argv) {
                 // adjust the viewport when the window is resized
                 screen_size.x = event.size.width;
                 screen_size.y = event.size.height;
+                glViewport(0.0,0.0,screen_size.x,screen_size.y);
             }
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
         	if (!right_pressed){
         		map_maker->load(RIGHT);
-                right_pressed = 10;
+                right_pressed = 4;
         	}
             else right_pressed--;
         }
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
         	if (!left_pressed){
         		map_maker->load(LEFT);
-                left_pressed = 10;
+                left_pressed = 4;
         	}
             else left_pressed--;
         }
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)){
         	if (!up_pressed){
         		map_maker->load(UP);
-                up_pressed = 10;
+                up_pressed = 4;
         	}
             else up_pressed--;
         }
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
         	if (!down_pressed){
         		map_maker->load(DOWN);
-                down_pressed = 10;
+                down_pressed = 4;
         	}
             else down_pressed--;
         }

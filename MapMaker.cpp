@@ -1,6 +1,6 @@
 #ifndef MAP_MAKER
 #define MAP_MAKER
-#define DRAW_ALL true
+#define DRAW_ALL false
 
 #include "Tile.cpp"
 const GLfloat cube_coords[] = {-1,1,1,1,1,1,1,1,-1,-1,1,-1, //TOP
@@ -10,6 +10,16 @@ const GLfloat cube_coords[] = {-1,1,1,1,1,1,1,1,-1,-1,1,-1, //TOP
                           -1,1,-1,1,1,-1,1,-1,-1,-1,-1,-1, //FRONT
                           1,1,1,-1,1,1,-1,-1,1,1,-1,1}; //BACK
 typedef std::map<int, Tile*> tile_map;
+
+sf::Vector3f cross_product(sf::Vector3f v1, sf::Vector3f v2){
+	sf::Vector3f cross_vec;
+	cross_vec.x = v1.y*v2.z - v2.y*v1.z;
+	cross_vec.y = v1.z*v2.x - v2.z*v1.x;
+	cross_vec.z = v1.x*v2.y - v2.x*v1.y;
+	float length = sqrt(cross_vec.x*cross_vec.x+cross_vec.y*cross_vec.y+cross_vec.z*cross_vec.z);
+	cross_vec = cross_vec/length;
+	return cross_vec;
+}
 
 class MapMaker {
 private:
@@ -32,7 +42,6 @@ public:
             map[i] = new Tile();
             map[i]->setID(i);
             map[i]->setVertices(vertices);
-            map[i]->setType(LAND);
         }
         map[0]->setNeighbor(3,LEFT);
         map[0]->setNeighbor(1,RIGHT);
@@ -59,11 +68,51 @@ public:
         map[5]->setNeighbor(0,UP);
         map[5]->setNeighbor(2,DOWN);
         for (int i = 0; i < 4; i++){
-            subdivide();
+            map = subdivide();
+        }
+        for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
+            float y = it->second->getNormalVector3f().y;
+            if (y == 1.0 || y == -1.0){
+                it->second->setType(ICE);
+            }
+            else {
+                int thresh = 10+(int) 60.0*cos(y*M_PI);
+                int choice = rand()%100;
+                if (choice < thresh){
+                    it->second->setType(LAND);
+                }
+                else{
+                    it->second->setType(OCEAN);
+                }
+            }
+            
+        }
+        for (int i = 0; i < 1; i++){
+            tile_map old_map = map;
+            map = subdivide();
+            map = subdivide();
+            for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
+                int choice = rand()%100;
+                if (choice < 20){ //CHOOSE LEFT
+                    it->second->setType(old_map[it->second->neighborAt(LEFT)/16]->getType());
+                }
+                else if (choice < 40){ //CHOOSE UP
+                    it->second->setType(old_map[it->second->neighborAt(UP)/16]->getType());
+                }
+                else if (choice < 60){ //CHOOSE RIGHT
+                    it->second->setType(old_map[it->second->neighborAt(RIGHT)/16]->getType());
+                }
+                else if (choice < 80){ //CHOOSE DOWN
+                    it->second->setType(old_map[it->second->neighborAt(DOWN)/16]->getType());
+                }
+                else { //CHOOSE SELF
+                    it->second->setType(old_map[it->first/16]->getType());
+                }
+            }
         }
         for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
             it->second->correct_and_normalize();
-            it->second->printNeighbors();
+            it->second->swap_LR();
         }
         
         center = 0;
@@ -71,6 +120,17 @@ public:
         load(DOWN);
     }
     void draw(){
+        sf::Vector3f target(0.0,1.0,0.0);
+        sf::Vector3f center_vec = loaded[center]->getNormalVector3f();
+        sf::Vector3f rot_axis = cross_product(center_vec,target);
+        double angle = (acos((center_vec.y)/(sqrt(pow(center_vec.x,2.0)+pow(center_vec.y,2.0)+pow(center_vec.z,2.0)))))*180.0/M_PI;
+        glPushMatrix();
+        
+        glTranslatef(0.0,-12.0,-10.0);
+        glRotatef(10.0,1.0,0.0,0.0);
+        glScalef(10.0,10.0,10.0);
+        glRotatef(angle,rot_axis.x,rot_axis.y,rot_axis.z);
+        
     #if DRAW_ALL == true
         for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
     #else
@@ -80,34 +140,35 @@ public:
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
             else {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             }
             it->second->draw();
         }
+        glPopMatrix();
     }
     void load(int direction){
         center = loaded[center]->neighborAt(direction);
         loaded.clear();
         loaded[center] = map[center];
-        for (int i = 0; i < 4; i++){
-            loaded[loaded[center]->neighborAt(i)]=map[loaded[center]->neighborAt(i)];
-        }
-        std::map<int,bool> to_load;
-        for (tile_map::iterator it = loaded.begin(); it != loaded.end(); ++it){
-            for (int i = 0; i < 4; i++){
-                try{
-                    loaded.at(it->second->neighborAt(i))->getID();
-                }
-                catch (const std::out_of_range &err){
-                    to_load[it->second->neighborAt(i)] = true;
+        for (int i = 0; i < 6; i++){
+            std::map<int,bool> to_load;
+            for (tile_map::iterator it = loaded.begin(); it != loaded.end(); ++it){
+                for (int i = 0; i < 4; i++){
+                    try{
+                        loaded.at(it->second->neighborAt(i))->getID();
+                    }
+                    catch (const std::out_of_range &err){
+                        to_load[it->second->neighborAt(i)] = true;
+                    }
                 }
             }
+            for (std::map<int,bool>::iterator it = to_load.begin(); it!= to_load.end(); ++it){
+                loaded[it->first] = map[it->first];
+            }
         }
-        for (std::map<int,bool>::iterator it = to_load.begin(); it!= to_load.end(); ++it){
-            loaded[it->first] = map[it->first];
-        }
+            
     }
-    void subdivide(){
+    tile_map subdivide(){
         tile_map new_map;
         Tile ** sub_tiles;
         for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
@@ -116,7 +177,7 @@ public:
                 new_map[sub_tiles[i]->getID()] = sub_tiles[i];
             }
         }
-        map = new_map;
+        return new_map;
     }
 };
 

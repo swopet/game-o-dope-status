@@ -11,15 +11,7 @@ const GLfloat cube_coords[] = {-1,1,1,1,1,1,1,1,-1,-1,1,-1, //TOP
                           1,1,1,-1,1,1,-1,-1,1,1,-1,1}; //BACK
 typedef std::map<int, Tile*> tile_map;
 
-sf::Vector3f cross_product(sf::Vector3f v1, sf::Vector3f v2){
-	sf::Vector3f cross_vec;
-	cross_vec.x = v1.y*v2.z - v2.y*v1.z;
-	cross_vec.y = v1.z*v2.x - v2.z*v1.x;
-	cross_vec.z = v1.x*v2.y - v2.x*v1.y;
-	float length = sqrt(cross_vec.x*cross_vec.x+cross_vec.y*cross_vec.y+cross_vec.z*cross_vec.z);
-	cross_vec = cross_vec/length;
-	return cross_vec;
-}
+
 
 class MapMaker {
 private:
@@ -67,7 +59,7 @@ public:
         map[5]->setNeighbor(3,RIGHT);
         map[5]->setNeighbor(0,UP);
         map[5]->setNeighbor(2,DOWN);
-        for (int i = 0; i < 4; i++){
+        for (int i = 0; i < 3; i++){
             map = subdivide();
         }
         for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
@@ -88,10 +80,16 @@ public:
             
         }
         for (int i = 0; i < 1; i++){
+            printf("randomly generating land (step %d)...\n",i);
             tile_map old_map = map;
             map = subdivide();
             map = subdivide();
+            int count = 0;
             for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
+                count++;
+                if (count%100 == 0){
+                    printf("Got through %d tiles\n",count);
+                }
                 int choice = rand()%100;
                 if (choice < 20){ //CHOOSE LEFT
                     it->second->setType(old_map[it->second->neighborAt(LEFT)/16]->getType());
@@ -120,14 +118,28 @@ public:
         load(DOWN);
     }
     void draw(){
-        sf::Vector3f target(0.0,1.0,0.0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPushMatrix();
+        glTranslatef(0.0,-0.5,-12.0);
+        glRotatef(10.0,1.0,0.0,0.0);
+        glScalef(100.0,100.0,100.0);
+        map[center]->draw(true);
+        map[center]->transform();
+        for (tile_map::iterator it = loaded.begin(); it != loaded.end(); ++it){
+            if (it->first != center){
+                it->second->draw();
+            }
+        }
+        glPopMatrix();
+        
+        /*sf::Vector3f target(0.0,1.0,0.0);
         sf::Vector3f center_vec = loaded[center]->getNormalVector3f();
         sf::Vector3f rot_axis = cross_product(center_vec,target);
         double angle = (acos((center_vec.y)/(sqrt(pow(center_vec.x,2.0)+pow(center_vec.y,2.0)+pow(center_vec.z,2.0)))))*180.0/M_PI;
         glPushMatrix();
         
         glTranslatef(0.0,-12.0,-10.0);
-        glRotatef(10.0,1.0,0.0,0.0);
+        //glRotatef(10.0,1.0,0.0,0.0);
         glScalef(10.0,10.0,10.0);
         glRotatef(angle,rot_axis.x,rot_axis.y,rot_axis.z);
         
@@ -145,6 +157,7 @@ public:
             it->second->draw();
         }
         glPopMatrix();
+        */
     }
     void load(int direction){
         center = loaded[center]->neighborAt(direction);
@@ -169,9 +182,15 @@ public:
             
     }
     tile_map subdivide(){
+        printf("subdividing map of size %d\n",map.size());
         tile_map new_map;
         Tile ** sub_tiles;
+        int count = 0;
         for (tile_map::iterator it = map.begin(); it != map.end(); ++it){
+            count++;
+            if (count%100 == 0){
+                printf("subdivided %d tiles\n",count);
+            }
             sub_tiles = it->second->subdivide(map);
             for (int i = 0; i < 4; i++){
                 new_map[sub_tiles[i]->getID()] = sub_tiles[i];

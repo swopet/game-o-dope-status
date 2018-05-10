@@ -19,16 +19,28 @@
 #define UP 1
 #define RIGHT 2
 #define DOWN 3
+
+//ERRORS
+#define NO_SOLUTION_ERROR -1
 sf::RenderWindow * window;
 
 sf::Vector2u screen_size;
+
+sf::Vector3f cross_product(sf::Vector3f v1, sf::Vector3f v2){
+	sf::Vector3f cross_vec;
+	cross_vec.x = v1.y*v2.z - v2.y*v1.z;
+	cross_vec.y = v1.z*v2.x - v2.z*v1.x;
+	cross_vec.z = v1.x*v2.y - v2.x*v1.y;
+	float length = sqrt(cross_vec.x*cross_vec.x+cross_vec.y*cross_vec.y+cross_vec.z*cross_vec.z);
+	cross_vec = cross_vec/length;
+	return cross_vec;
+}
 
 #include "MapMaker.cpp"
 
 MapMaker * map_maker;
 
 void update(){
-	//ctr += 1.0;
 }
 
 void display(){

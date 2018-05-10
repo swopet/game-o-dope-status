@@ -116,18 +116,11 @@ public:
         GLfloat origin_1[3] = {vertices[9],vertices[10],vertices[11]};
         GLfloat x_vec_1[3] = {vertices[3],vertices[4],vertices[5]};
         GLfloat y_vec_1[3] = {vertices[15],vertices[16],vertices[17]};
-        printf("(%f,%f,%f),(%f,%f,%f),(%f,%f,%f)->",origin_1[0],origin_1[1],origin_1[2],x_vec_1[0],x_vec_1[1],x_vec_1[2],y_vec_1[0],y_vec_1[1],y_vec_1[2]);
         glPushMatrix();
         glLoadIdentity();
-        
-        glGetFloatv(GL_MODELVIEW_MATRIX, current_matrix);
-        //origin_1[0] = 0.0; origin_1[1] = 0.0; origin_1[2] = 0.0;
-        //multiply_vector(x_vec_1,current_matrix);
-        //multiply_vector(y_vec_1,current_matrix);
         sf::Vector3f cross = cross_product(sf::Vector3f(y_vec_1[0]-origin_1[0],y_vec_1[1]-origin_1[1],y_vec_1[2]-origin_1[2]),sf::Vector3f(x_vec_1[0]-origin_1[0],x_vec_1[1]-origin_1[1],x_vec_1[2]-origin_1[2]));
         sf::Vector3f cross_2 = cross_product(sf::Vector3f(0,-1.0,0.0),cross);
         double angle = (acos((cross.y)/(sqrt(pow(cross.x,2.0)+pow(cross.y,2.0)+pow(cross.z,2.0)))))*180.0/M_PI;
-        //glLoadIdentity();
         glRotatef(angle,cross_2.x,cross_2.y,cross_2.z);
         glTranslatef(-origin_1[0],-origin_1[1],-origin_1[2]);
         glGetFloatv(GL_MODELVIEW_MATRIX, current_matrix);
@@ -158,9 +151,45 @@ public:
         triangle_up_right.vertices[17] = y_vec_1[2];
         for (int i = 0; i < 16; i++)
             triangle_up_right.transform_matrix[i] = current_matrix[i];
+        //Do the same for the second triangle
         GLfloat origin_2[3] = {vertices[21],vertices[22],vertices[23]};
         GLfloat x_vec_2[3] = {vertices[15],vertices[16],vertices[17]};
         GLfloat y_vec_2[3] = {vertices[3],vertices[4],vertices[5]};
+        glPushMatrix();
+        glLoadIdentity();
+        cross = cross_product(sf::Vector3f(y_vec_2[0]-origin_2[0],y_vec_2[1]-origin_2[1],y_vec_2[2]-origin_2[2]),sf::Vector3f(x_vec_2[0]-origin_2[0],x_vec_2[1]-origin_2[1],x_vec_2[2]-origin_2[2]));
+        cross_2 = cross_product(sf::Vector3f(0,-1.0,0.0),cross);
+        angle = (acos((cross.y)/(sqrt(pow(cross.x,2.0)+pow(cross.y,2.0)+pow(cross.z,2.0)))))*180.0/M_PI;
+        glRotatef(angle,cross_2.x,cross_2.y,cross_2.z);
+        glTranslatef(-origin_2[0],-origin_2[1],-origin_2[2]);
+        glGetFloatv(GL_MODELVIEW_MATRIX, current_matrix);
+        multiply_vector(origin_2,current_matrix);
+        multiply_vector(x_vec_2,current_matrix);
+        multiply_vector(y_vec_2,current_matrix);
+        x_vec_2[1] = 0.0;
+        y_vec_2[1] = 0.0;
+        printf("(%f,%f,%f),(%f,%f,%f),(%f,%f,%f)\n",origin_2[0],origin_2[1],origin_2[2],x_vec_2[0],x_vec_2[1],x_vec_2[2],y_vec_2[0],y_vec_2[1],y_vec_2[2]);
+        glPopMatrix();
+        triangle_down_left.vertices[0] = 0.0;
+        triangle_down_left.vertices[1] = 1.0;
+        triangle_down_left.vertices[2] = 0.0;
+        triangle_down_left.vertices[3] = x_vec_2[0];
+        triangle_down_left.vertices[4] = x_vec_2[1];
+        triangle_down_left.vertices[5] = x_vec_2[2];
+        triangle_down_left.vertices[6] = 0.0;
+        triangle_down_left.vertices[7] = 1.0;
+        triangle_down_left.vertices[8] = 0.0;
+        triangle_down_left.vertices[9] = origin_2[0];
+        triangle_down_left.vertices[10] = origin_2[1];
+        triangle_down_left.vertices[11] = origin_2[2];
+        triangle_down_left.vertices[12] = 0.0;
+        triangle_down_left.vertices[13] = 1.0;
+        triangle_down_left.vertices[14] = 0.0;
+        triangle_down_left.vertices[15] = y_vec_2[0];
+        triangle_down_left.vertices[16] = y_vec_2[1];
+        triangle_down_left.vertices[17] = y_vec_2[2];
+        for (int i = 0; i < 16; i++)
+            triangle_down_left.transform_matrix[i] = current_matrix[i];
     }
     void setVertices(GLfloat * new_vertices){
         for (int i = 0; i < 24; i++){
@@ -172,7 +201,7 @@ public:
     }
     void draw(bool center = false){
         if (!center) glInterleavedArrays(GL_N3F_V3F,0,vertices);
-        else glInterleavedArrays(GL_N3F_V3F,0,triangle_up_right.vertices);
+        else glInterleavedArrays(GL_N3F_V3F,0,triangle_down_left.vertices);
         switch(type){
             case LAND:
                 glColor3f(0.1,0.7,0.1);
@@ -188,7 +217,7 @@ public:
         else glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_INT,triangles_array);
     }
     void transform(){
-        glMultMatrixf(triangle_up_right.transform_matrix);
+        glMultMatrixf(triangle_down_left.transform_matrix);
     }
     void swap_LR(){
         int right = neighbors[RIGHT];

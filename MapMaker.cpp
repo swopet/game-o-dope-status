@@ -2,7 +2,7 @@
 #define MAP_MAKER
 #define DRAW_ALL false
 
-#define WORLD_RADIUS 500 //in kilometers
+#define WORLD_RADIUS 1000.0 //in kilometers
 
 #include "Tile.cpp"
 const GLfloat cube_coords[] = {-1,1,1,1,1,1,1,1,-1,-1,1,-1, //TOP
@@ -124,6 +124,7 @@ public:
         glPushMatrix();
         glTranslatef(0.0,-1.6,-1.0);
         map[center]->draw(true);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         map[center]->transform();
         for (tile_map::iterator it = loaded.begin(); it != loaded.end(); ++it){
             if (it->first != center){

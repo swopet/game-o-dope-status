@@ -98,7 +98,7 @@ public:
     int neighborAt(int which){
         return neighbors[which];
     }
-    void correct_and_normalize(GLfloat radius = 1.0){
+    void correct_and_normalize(GLfloat radius){
         for (int i = 0; i < 4; i++){
             GLfloat norm_length = sqrt(pow(vertices[i*6],2)+pow(vertices[i*6+1],2)+pow(vertices[i*6+2],2));
             if (norm_length==0){
